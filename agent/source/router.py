@@ -1,29 +1,33 @@
 # This contains the question routing codebase
 
-from langchain_core.messages import HumanMessage, AIMessage
-from source.agent import agent
+from agent.source.agent import agent
+from backend.chat_history import fetch_messages
 
-GREETINGS = {"hi","hello","hey","good morning","good afternoon","good evening",
-             "thanks","thank you","who are you","can you help me"}
+def query_agent(user_input: str, thread_id: str):
+    """
+    Query the agent with the latest user message and full chat history.
+    Automatically includes all previous messages for the thread.
+    """
+    # Fetch all previous messages for this thread
+    history = fetch_messages(user_id=thread_id, thread_id=thread_id)
 
-def greeting_intent(query: str) -> bool:
-    return query.lower().strip() in GREETINGS
+    # Include the new user message
+    state_messages = [{"role": m["role"], "content": m["message"]} for m in history]
+    state_messages.append({"role": "user", "content": user_input})
 
-def query_agent(user_input: str, thread_id: str, state=None):
-    if greeting_intent(user_input):
-        return "Hi, How can I help you today?", False
-    
-    # Build state with placeholder AIMessage to prevent ToolNode error
-    if state is None:
-        state = {"messages":[HumanMessage(content=user_input), AIMessage(content="")]}
-    
-    result = agent.invoke(state, config={"configurable":{"thread_id":thread_id}})
-    
-    final_answer = None
-    used_retrieval = False
-    for message in result["messages"]:
-        if getattr(message, "tool_calls", None):
-            used_retrieval = True
-        if getattr(message, "content", None):
-            final_answer = message.content
-    return final_answer, used_retrieval
+    # Build agent state
+    state = {"messages": state_messages}
+
+    # Invoke the agent
+    result = agent.invoke(
+        state,
+        config={"configurable": {"thread_id": thread_id}},
+    )
+
+    # Extract assistant's last message
+    final_message = result["messages"][-1].content
+
+    # Check if any tool (retriever) was used
+    used_retrieval = any(getattr(m, "type", None) == "tool" for m in result["messages"])
+
+    return final_message, used_retrieval

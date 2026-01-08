@@ -4,7 +4,7 @@ import os
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-def load_documents(data_path="data") -> list:
+def load_documents(data_path="agent/data") -> list:
     all_pages = []
     document_list = os.listdir(data_path)
     for file in document_list:
