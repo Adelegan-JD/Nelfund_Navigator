@@ -22,6 +22,8 @@ function Login() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
+      localStorage.setItem("chat_user_id", user.uid);
+      localStorage.setItem("isLoggedIn", "true");
       setMessage(`Login successful! Welcome ${user.email}`);
       navigate("/chatbot");
     } catch (error) {
