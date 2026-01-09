@@ -1,11 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import NavBar from "./NavBar";
 import SideBarContainer from "./SideBarComponents/SideBarContainer";
 import { useNavigate } from "react-router-dom";
 import { User, Bot } from "lucide-react";
+import { v4 as uuidv4 } from "uuid";
 
 const ChatBot = () => {
-  const [activeChatId, setActiveChatId] = useState(1);
+  const [activeThreadId, setActiveThreadId] = useState(localStorage.getItem("active_thread_id") || uuidv4());
+  const [userId, setUserId] = useState(localStorage.getItem("chat_user_id") || null);
   const [messages, setMessages] = useState([
     { role: "bot", text: "Hi 👋 How can I help you today?" }
   ]);
@@ -13,35 +15,100 @@ const ChatBot = () => {
   const [loading, setLoading] = useState(false);
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const navigate = useNavigate();
+  const chatContainerRef = useRef(null);
 
-  const sendMessage = () => {
-    if (!input.trim()) return;
+  // Auto-scroll to bottom
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [messages, loading]);
 
-    setMessages(prev => [...prev, { role: "user", text: input }]);
+  // Fetch messages for active thread
+  useEffect(() => {
+    if (userId && activeThreadId) {
+      const fetchChatHistory = async () => {
+        setLoading(true);
+        try {
+          const res = await fetch(`http://localhost:8000/messages/${userId}?thread_id=${activeThreadId}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.length > 0) {
+              setMessages(data.map(m => ({
+                role: m.role,
+                text: m.message
+              })));
+            } else {
+              setMessages([{ role: "bot", text: "New conversation started! How can I help?" }]);
+            }
+          }
+        } catch (err) {
+          console.error("Error fetching chat history:", err);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchChatHistory();
+      localStorage.setItem("active_thread_id", activeThreadId);
+    }
+  }, [userId, activeThreadId]);
+
+  const sendMessage = async () => {
+    if (!input.trim() || loading) return;
+
+    const userMessage = input;
+    setMessages(prev => [...prev, { role: "user", text: userMessage }]);
     setInput("");
     setLoading(true);
 
-    setTimeout(() => {
-      setMessages(prev => [
-        ...prev,
-        { role: "bot", text: "I'm processing your question. Please wait a moment." }
-      ]);
+    try {
+      const response = await fetch("http://localhost:8000/message", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          thread_id: activeThreadId, // Ensure thread_id is sent
+          message: userMessage,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Server error");
+
+      const data = await response.json();
+
+      if (!userId && data.user_id) {
+        setUserId(data.user_id);
+        localStorage.setItem("chat_user_id", data.user_id);
+      }
+
+      setMessages(prev => [...prev, { role: "bot", text: data.answer }]);
+    } catch (error) {
+      console.error("Chat error:", error);
+      setMessages(prev => [...prev, { role: "bot", text: "Connection error. Please try again." }]);
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
+  };
+
+  const handleNewChat = () => {
+    const newThreadId = uuidv4();
+    setActiveThreadId(newThreadId);
+    setMessages([{ role: "bot", text: "Hi 👋 How can I help you today?" }]);
   };
 
   const handleLogout = () => {
-    // 2 second delay before logout
     setTimeout(() => {
       localStorage.removeItem("isLoggedIn");
+      localStorage.removeItem("chat_user_id");
+      localStorage.removeItem("active_thread_id");
       navigate("/");
     }, 2000);
   };
 
   return (
     <div className="h-screen flex flex-col bg-background text-foreground transition-colors duration-300">
-
-      {/* Navbar */}
       <NavBar>
         <button
           className="md:hidden px-3 py-2 rounded-md bg-gray-200 dark:bg-gray-700 hover:opacity-90 transition"
@@ -52,34 +119,29 @@ const ChatBot = () => {
       </NavBar>
 
       <div className="flex flex-1 overflow-hidden relative">
-
         {/* Desktop Sidebar */}
         <div className="hidden md:flex">
           <SideBarContainer
-            activeChatId={activeChatId}
-            onSelectChat={setActiveChatId}
-            onNewChat={() => {
-              const newId = messages.length + 1;
-              setActiveChatId(newId);
-              setMessages(prev => [...prev, { role: "bot", text: "New chat started!" }]);
-            }}
+            activeChatId={activeThreadId}
+            onSelectChat={setActiveThreadId}
+            onNewChat={handleNewChat}
             onDeleteChat={(id) => console.log("Delete chat:", id)}
             onLogout={handleLogout}
           />
         </div>
 
-        {/* Mobile Sidebar Slide-in */}
+        {/* Mobile Sidebar */}
         {isMobileSidebarOpen && (
           <>
             <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setMobileSidebarOpen(false)}></div>
             <div className="fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-border flex flex-col animate-slide-in">
               <SideBarContainer
-                activeChatId={activeChatId}
+                activeChatId={activeThreadId}
                 onSelectChat={(id) => {
-                  setActiveChatId(id);
+                  setActiveThreadId(id);
                   setMobileSidebarOpen(false);
                 }}
-                onNewChat={() => console.log("New chat")}
+                onNewChat={handleNewChat}
                 onDeleteChat={(id) => console.log("Delete chat:", id)}
                 onLogout={handleLogout}
               />
@@ -89,36 +151,20 @@ const ChatBot = () => {
 
         {/* Chat Section */}
         <div className="flex-1 flex flex-col bg-background/50 transition-colors duration-300">
-
-          {/* Chat messages */}
-          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+          <div 
+            ref={chatContainerRef}
+            className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6"
+          >
             {messages.map((msg, i) => (
-              <div
-                key={i}
-                className={`flex gap-3 animate-fade-in ${
-                  msg.role === "user" ? "flex-row-reverse" : "flex-row"
-                }`}
-              >
-                {/* Icon */}
-                <div
-                  className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${
-                    msg.role === "user"
-                      ? "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
-                      : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
-                  }`}
-                >
+              <div key={i} className={`flex gap-3 animate-fade-in ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
+                <div className="flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                   {msg.role === "user" ? <User size={20} /> : <Bot size={20} />}
                 </div>
-
-                {/* Message Bubble */}
-                <div
-                  className={`w-fit max-w-[80%] md:max-w-[70%] px-4 py-3 rounded-2xl text-sm shadow-sm break-words leading-relaxed
-                    ${
-                      msg.role === "user"
-                        ? "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-tr-none"
-                        : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-tl-none"
-                    }`}
-                >
+                <div className={`w-fit max-w-[80%] md:max-w-[70%] px-4 py-3 rounded-2xl text-sm shadow-sm break-words leading-relaxed ${
+                  msg.role === "user" 
+                    ? "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-tr-none" 
+                    : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-tl-none"
+                }`}>
                   {msg.text}
                 </div>
               </div>
@@ -142,19 +188,18 @@ const ChatBot = () => {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 placeholder="Ask a question..."
-                className="flex-1 px-4 py-3 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
+                className="flex-1 px-4 py-3 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background text-foreground"
                 onKeyDown={e => e.key === "Enter" && sendMessage()}
               />
               <button
                 onClick={sendMessage}
                 disabled={loading}
-                className="px-6 py-3 text-sm font-medium rounded-lg bg-primary text-white hover:opacity-90 transition disabled:opacity-50"
+                className="px-6 py-3 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition disabled:opacity-50"
               >
                 Send
               </button>
             </div>
           </div>
-
         </div>
       </div>
     </div>

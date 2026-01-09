@@ -23,11 +23,13 @@ function Signup() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
-      setMessage("Signup successful! Redirecting to login...");
+      localStorage.setItem("chat_user_id", user.uid);
+      localStorage.setItem("isLoggedIn", "true");
+      setMessage("Signup successful! Redirecting to chatbot...");
       setEmail("");
       setPassword("");
       setName("");
-      setTimeout(() => navigate("/login"), 1000);
+      setTimeout(() => navigate("/chatbot"), 1000);
     } catch (error) {
       console.error("Signup error:", error);
       if (error.code === 'auth/email-already-in-use') {
