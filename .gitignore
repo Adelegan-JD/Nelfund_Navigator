@@ -3,3 +3,11 @@
 __pycache__
 full_pipeline.ipynb
 C:\Users\Welcome Sir\Desktop\Nelfund_Navigator\full_pipeline.ipynb
+
+# Python
+cache__pycache__/*.pyc
+
+# Vector DB
+ / runtime
+ database/chroma_db/*.sqlite3
+ database/chroma_db/chroma.sqlite3
