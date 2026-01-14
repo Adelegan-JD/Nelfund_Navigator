@@ -1,32 +1,73 @@
 import React from 'react';
 import NavBar from '../NavBar';
+import { ArrowRight, Clock, User } from 'lucide-react';
 
 const Blog = ({ isSection = false }) => {
+  const posts = [
+    {
+      title: "5 Tips for a Successful Loan Application",
+      excerpt: "Discover the key documents and steps you need to approve your NELFUND loan instantly.",
+      image: "/student.jfif",
+      category: "Featured",
+      author: "Admin",
+      date: "Oct 24, 2023"
+    }
+  ];
+
   return (
-    <div className={`${isSection ? 'py-16 ' : 'min-h-screen bg-gradient-to-br from-emerald-200/30 via-transparent to-green-300/20 dark:from-emerald-900/3'} bg-transparent text-foreground flex flex-col`}>
+    <div className={`relative isolate overflow-hidden ${isSection ? 'py-24' : 'min-h-screen'} bg-transparent text-foreground flex flex-col`}>
       {!isSection && <NavBar />}
-      <div className={`flex-1 container mx-auto px-4 ${isSection ? '' : 'py-8'} flex flex-col items-center justify-center text-center`}>
-        <h1 className="text-4xl md:text-5xl font-bold mb-4 text-primary">Our Blog</h1>
-        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mb-8">
-          Stay tuned for the latest updates, scholarship tips, and financial advice for students.
-        </p>
+      
+      {/* Background Gradient/Orb - Matching HeroSection */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 -z-10 w-[800px] h-[800px] bg-emerald-500/20 rounded-full blur-[120px] opacity-40 pointer-events-none" />
+
+      <div className="container mx-auto px-4 lg:px-8">
+        <div className="max-w-3xl mx-auto text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 text-glow">
+            Our Latest <span className="text-emerald-600 dark:text-emerald-400">Insights</span>
+          </h2>
+          <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
+            Stay tuned for the latest updates, scholarship tips, and financial advice for students.
+          </p>
+        </div>
         
-        <div className="md:flex items-center gap-8 w-full max-w-4xl bg-card border border-border rounded-xl p-6 shadow-sm text-left">
-           <img 
-              src="/student.jfif" 
-              alt="Student studying" 
-              className="w-full md:w-1/2 h-64 object-cover rounded-lg shadow-md mb-6 md:mb-0"
-           />
-           <div className="flex-1 space-y-4">
-              <span className="inline-block px-3 py-1 text-xs font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full">
-                Featured
-              </span>
-              <h3 className="text-2xl font-bold">5 Tips for a Successful Loan Application</h3>
-              <p className="text-muted-foreground">
-                 Discover the key documents and steps you need to approve your NELFUND loan instantly.
-              </p>
-              <button className="text-primary font-medium hover:underline">Read More →</button>
-           </div>
+        <div className="max-w-5xl mx-auto">
+          {posts.map((post, index) => (
+            <div key={index} className="group relative bg-white dark:bg-slate-900/50 border border-emerald-100 dark:border-emerald-500/20 rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500">
+               <div className="flex flex-col md:flex-row">
+                  <div className="md:w-1/2 h-64 md:h-auto relative overflow-hidden">
+                    <img 
+                       src={post.image} 
+                       alt={post.title} 
+                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div className="absolute top-4 left-4">
+                      <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider text-white bg-emerald-600 rounded-lg shadow-lg">
+                        {post.category}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="md:w-1/2 p-8 md:p-12 flex flex-col justify-center space-y-6">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground font-medium">
+                      <span className="flex items-center gap-1.5"><User size={14} className="text-emerald-500" /> {post.author}</span>
+                      <span className="flex items-center gap-1.5"><Clock size={14} className="text-emerald-500" /> {post.date}</span>
+                    </div>
+                    
+                    <h3 className="text-2xl md:text-3xl font-bold text-foreground group-hover:text-emerald-600 transition-colors">
+                      {post.title}
+                    </h3>
+                    <p className="text-muted-foreground text-lg leading-relaxed">
+                      {post.excerpt}
+                    </p>
+                    
+                    <button className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold hover:gap-3 transition-all duration-300">
+                      Read Full Article <ArrowRight size={20} />
+                    </button>
+                  </div>
+               </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
