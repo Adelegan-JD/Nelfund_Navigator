@@ -8,6 +8,7 @@ import Demo from './Components/HomePage/Demo';
 import ChatBot from './Components/ChatBot';
 import Blog from './Components/HomePage/Blog';
 import Contact from './Components/HomePage/Contact';
+import Profile from './Components/Profile';
 
 const App = () => {
   return (
@@ -21,6 +22,7 @@ const App = () => {
             <Route path='/chatbot' element={<ChatBot />} />
             <Route path='/blog' element={<Blog />} />
             <Route path='/contact' element={<Contact />} />
+            <Route path='/profile' element={<Profile />} />
             </Routes>
     </BrowserRouter>
   )

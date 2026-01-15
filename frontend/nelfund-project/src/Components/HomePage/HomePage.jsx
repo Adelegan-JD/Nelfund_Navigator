@@ -2,6 +2,8 @@ import NavBar from "../NavBar";
 import HeroSection from "./HeroSection";
 import Blog from "./Blog";
 import Contact from "./Contact";
+import { Linkedin, LinkedinIcon, TwitterIcon, Facebook } from "lucide-react";
+import { X } from "lucide-react";
 
 const HomePage = () => {
   return (
@@ -17,7 +19,7 @@ const HomePage = () => {
       {/* Premium Footer */}
       <footer className="bg-slate-950 text-slate-300 py-16 border-t border-slate-800">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-12 mb-12">
             {/* Brand */}
             <div>
               <h3 className="text-2xl font-bold text-emerald-500 mb-4">NelFund AI</h3>
@@ -27,13 +29,13 @@ const HomePage = () => {
               <div className="flex gap-4">
                 {/* Social Placeholders */}
                 <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center hover:bg-emerald-600 transition-colors cursor-pointer">
-                   <span className="text-lg">𝕏</span>
+                   <a href="https://x.com/NELFUND" className="text-lg"><TwitterIcon /></a>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center hover:bg-emerald-600 transition-colors cursor-pointer">
-                   <span className="text-lg">in</span>
+                   <a href="https://www.linkedin.com/company/nigerianeducationloanfund/?originalSubdomain=ng" className="text-lg"><LinkedinIcon /></a>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center hover:bg-emerald-600 transition-colors cursor-pointer">
-                   <span className="text-lg">fb</span>
+                   <a href="https://web.facebook.com/Nelfundstudentloan/?_rdc=1&_rdr#" className="text-lg"><Facebook /></a>
                 </div>
               </div>
             </div>
@@ -50,7 +52,7 @@ const HomePage = () => {
             </div>
 
             {/* Legal */}
-            <div>
+            {/* <div>
               <h4 className="text-lg font-semibold text-white mb-6">Legal</h4>
               <ul className="space-y-4">
                 <li><a href="#" className="hover:text-emerald-500 transition-colors">Privacy Policy</a></li>
@@ -58,7 +60,7 @@ const HomePage = () => {
                 <li><a href="#" className="hover:text-emerald-500 transition-colors">Cookie Policy</a></li>
                 <li><a href="#" className="hover:text-emerald-500 transition-colors">Disclaimer</a></li>
               </ul>
-            </div>
+            </div> */}
 
             {/* Newsletter */}
             <div>

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Sparkles, 
   ArrowRight, 
@@ -12,10 +12,36 @@ import {
   CheckCircle,
   MessageSquare
 } from "lucide-react";
+import { auth, db } from "../../lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
 const HeroSection = () => {
   const [demoLoading, setDemoLoading] = useState(false);
+  const [userName, setUserName] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const docRef = doc(db, "profiles", user.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists() && docSnap.data().name) {
+            setUserName(docSnap.data().name);
+          } else {
+             setUserName(user.displayName || user.email?.split('@')[0] || "");
+          }
+        } catch (error) {
+          console.error("Error fetching name:", error);
+        }
+      } else {
+        setUserName("");
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   function handleDemo() {
     setDemoLoading(true);
@@ -38,7 +64,7 @@ const HeroSection = () => {
               {/* Trust Badge */}
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-200 dark:border-emerald-500/30 bg-gray-100 dark:bg-emerald-900/10 text-emerald-900 dark:text-emerald-300 text-sm font-medium animate-fade-in shadow-sm">
                 <Sparkles size={16} />
-                <span>Trusted by 10,000+ Students</span>
+                <span>{userName ? `Welcome back, ${userName}!` : "Trusted by 10,000+ Students"}</span>
               </div>
 
               {/* Headline */}
