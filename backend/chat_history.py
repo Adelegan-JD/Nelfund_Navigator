@@ -1,6 +1,6 @@
 # This is for MongoDB chat retrieval & save functions
 
-from backend.db import messages_collection
+from db import messages_collection
 from datetime import datetime
 
 def save_message(user_id: str, thread_id: str, role: str, message: str):
